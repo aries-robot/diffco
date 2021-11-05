@@ -235,8 +235,9 @@ def main(DOF, env_name, lmbda=10):
     
     # ''' new diffco 3-figure compare (work, c space 1, c space 2)==========
     from diffco import DiffCo
+    from diffco import DiffCoBeta
 
-    checker = DiffCo(
+    checker = DiffCoBeta(
         obstacles, 
         kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), 
         rbf_kernel=kernel.Polyharmonic(1, epsilon=1)) #kernel.Polyharmonic(1, epsilon=1)) kernel.MultiQuadratic(epsilon=1)
@@ -309,8 +310,8 @@ def main(DOF, env_name, lmbda=10):
         bbox=dict(boxstyle='round', facecolor='wheat', alpha=1))#, fontdict={"family": "Times New Roman",})
     ax.set_title('{} original supports, {} random samples'.format(checker.num_origin_supports, checker.n_left_out_points))
 
-    # plt.show()
-    plt.savefig('figs/correlation/training_{}dof_{}_{}_{}ransample_rsquare.png'.format(DOF, env_name, 'hybriddiffco', checker.n_left_out_points))
+    plt.show()
+    # plt.savefig('figs/correlation/training_{}dof_{}_{}_{}ransample_rsquare.png'.format(DOF, env_name, 'hybriddiffco', checker.n_left_out_points))
     # plt.savefig('figs/correlation/{}dof_{}_{}.pdf'.format(DOF, env_name, fitting_target))#, dpi=500)
     # plt.savefig('figs/correlation/{}dof_{}_{}_{}_rsquare.png'.format(DOF, env_name, fitting_target, 'woFK' if checker.fkine is None else 'withFK'), dpi=300)
     

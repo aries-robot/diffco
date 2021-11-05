@@ -7,7 +7,7 @@ import seaborn as sns
 from torch._C import dtype
 sns.set()
 plt.rcParams.update({
-    "text.usetex": True,
+    "text.usetex": False,
     "font.family": 'sans-serif',  
 })
 
@@ -169,6 +169,6 @@ for j, dof_group in enumerate(plot_dof_groups):
         fig.legend(handles, labels, loc='lower center',
                     ncol=len(methods), bbox_to_anchor=(0.5, -0.2/len(plot_dof_groups)), borderaxespad=1)
 plt.tight_layout()
-# plt.show()
-plt.savefig('figs/speed_compare/stats_by_obsnum_repaired_{}.pdf'.format("_".join(methods)),
-            dpi=500, bbox_inches='tight')
+plt.show()
+# plt.savefig('figs/speed_compare/stats_by_obsnum_repaired_{}.pdf'.format("_".join(methods)),
+            # dpi=500, bbox_inches='tight')
