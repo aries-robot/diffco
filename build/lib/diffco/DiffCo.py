@@ -25,7 +25,6 @@ class CollisionChecker():
         return self.predict(*args, **kwargs)
     
 
-
 class DiffCo(CollisionChecker):
     def __init__(self, obstacles, kernel_func='rq', gamma=1, beta=1, gt_checker=None):
         super().__init__(obstacles)

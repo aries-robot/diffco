@@ -142,7 +142,10 @@ def create_plots(robot, obstacles, dist_est, checker):
                 c_ax = fig.add_subplot(gs[-1, cat])
                 score = score_spline[:, :, cat] # estimated score grid
                 color_mesh = c_ax.pcolormesh(xx, yy, score, cmap=cmaps[cat], vmin=-torch.abs(score).max(), vmax=torch.abs(score).max())
-                c_support_points = checker.support_points[checker.gains[:, cat] != 0]
+                if checker.gains.dim() == 1:
+                    c_support_points = checker.support_points[checker.gains != 0]
+                else:
+                    c_support_points = checker.support_points[checker.gains[:, cat] != 0]
                 c_ax.scatter(c_support_points[:, 0], c_support_points[:, 1], marker='.', c='black', s=1.5)
                 c_ax.contour(xx, yy, score, levels=10, linewidths=1, alpha=0.4, ) #-1.5, -0.75, 0, 0.3
                 for _ in range(4):
