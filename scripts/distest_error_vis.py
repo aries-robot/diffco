@@ -179,16 +179,22 @@ def main(DOF, env_name, lmbda=10):
     train_num = 6000
     indices = torch.LongTensor(np.random.choice(len(cfgs), train_num, replace=False))
     fkine = robot.fkine
-    '''
+    
     checker = DiffCo(obstacles, kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(lmbda)), beta=1.0) 
     # checker = MultiDiffCo(obstacles, kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), beta=1.0)
     keep_all = False
+    print("env_name:", env_name)
     if 'compare' not in env_name:
         checker.train(cfgs[:train_num], labels[:train_num], max_iteration=len(cfgs[:train_num]), distance=dists[:train_num],
             keep_all=keep_all)
+        print("cfgs[:train_num].shape:", cfgs[:train_num].shape)
+        print("labels[:train_num].shape:", labels[:train_num].shape)
+        print("distance[:train_num].shape:", dists[:train_num].shape)
     else:
         checker.train(cfgs[indices], labels[indices], max_iteration=len(cfgs[indices]), distance=dists[indices],
             keep_all=keep_all)
+    print(checker.support_points.shape)
+    exit()
 
     # Check DiffCo test ACC
     test_preds = (checker.score(cfgs[train_num:]) > 0) * 2 - 1
@@ -207,7 +213,7 @@ def main(DOF, env_name, lmbda=10):
     dist_est = checker.rbf_score
     #  = checker.score
     # dist_est = checker.poly_score
-    '''
+    
 
     ''' #==================3-figure compare (work, c space 1, c space 2)==========
     size = [400, 400]
@@ -234,19 +240,19 @@ def main(DOF, env_name, lmbda=10):
     '''
     
     # ''' new diffco 3-figure compare (work, c space 1, c space 2)==========
-    from diffco import DiffCo
-    from diffco import DiffCoBeta
+    # from diffco import DiffCo
+    # from diffco import DiffCoBeta
 
-    checker = DiffCoBeta(
-        obstacles, 
-        kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), 
-        rbf_kernel=kernel.Polyharmonic(1, epsilon=1)) #kernel.Polyharmonic(1, epsilon=1)) kernel.MultiQuadratic(epsilon=1)
-    checker.train(cfgs[:train_num], dists[:train_num], fkine=fkine, max_iteration=int(1e4), n_left_out_points=300, dtol=1e-1)
-    checker.gains = checker.gains.reshape(-1, 1)
-    dist_est = checker.rbf_score
+    # checker = DiffCoBeta(
+    #     obstacles, 
+    #     kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), 
+    #     rbf_kernel=kernel.Polyharmonic(1, epsilon=1)) #kernel.Polyharmonic(1, epsilon=1)) kernel.MultiQuadratic(epsilon=1)
+    # checker.train(cfgs[:train_num], dists[:train_num], fkine=fkine, max_iteration=int(1e4), n_left_out_points=300, dtol=1e-1)
+    # checker.gains = checker.gains.reshape(-1, 1)
+    # dist_est = checker.rbf_score
 
-    size = [400, 400]
-    env_name_gt = env_name if 'compare' in env_name else env_name+'_for_compare'
+    # size = [400, 400]
+    # env_name_gt = env_name if 'compare' in env_name else env_name+'_for_compare'
     # gt_grid = torch.load('data/2d_{}dof_{}.pt'.format(DOF, env_name_gt))['dist']
     # grid_points = torch.load('data/2d_{}dof_{}.pt'.format(DOF, env_name_gt))['data']
     # raw_grid_score = checker.rbf_score(grid_points)
