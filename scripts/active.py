@@ -160,7 +160,6 @@ def create_plots(robot, obstacles, dist_est, checker):
                 c_ax.set_yticks([-np.pi, 0, np.pi])
                 c_ax.set_yticklabels(['$-\pi$', '$0$', '$\pi$'])
 
-
     # Plot ostacles
     ax.set_xlim(-8, 8)
     ax.set_ylim(-8, 8)

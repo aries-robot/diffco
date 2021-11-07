@@ -154,7 +154,7 @@ class DiffCo(CollisionChecker):
         self.rbf_kernel = kernel.MultiQuadratic(rbfi.epsilon) if kernel_func is None else kernel_func
         kmat = self.rbf_kernel(X, X)
 
-        self.rbf_nodes = torch.solve(y[:, None], kmat).solution.reshape(-1)
+        self.rbf_nodes = torch.linalg.solve(kmat, y[:, None]).reshape(-1)
         # print(kmat@self.rbf_nodes) # DEBUG
     
     def rbf_score(self, point):

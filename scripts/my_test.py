@@ -1,4 +1,10 @@
 # After DiffCo Change: python setup.py install
+#
+# matplotlib tex 사용법:
+# sudo apt-get install texlive texlive-latex-extra texlive-fonts-recommended dvipng cm-super
+# pip install latex
+# 
+
 from active import *
 from diffco.Obstacles import Obstacle
 from diffco.DiffCo import DiffCo, vis
@@ -7,26 +13,143 @@ from time import time
 
 def single_plot(robot, p, fig, link_plot, joint_plot, eff_plot, cfg_path_plots=None, path_history=None, save_dir=None, ax=None):
     points_traj = torch.cat([torch.zeros(len(p), 1, 2), robot.fkine(p)], dim=1)
-    traj_alpha = 0.3
     ends_alpha = 0.5
-    
     lw = link_plot.get_lw()
-    link_traj = [ax.plot(points[:, 0], points[:, 1], color='gray', alpha=traj_alpha, lw=lw, solid_capstyle='round')[0] for points in points_traj]
-    joint_traj = [ax.plot(points[:-1, 0], points[:-1, 1], 'o', color='tab:red', alpha=traj_alpha, markersize=lw)[0] for points in points_traj]
-    eff_traj = [ax.plot(points[-1:, 0], points[-1:, 1], 'o', color='black', alpha=traj_alpha, markersize=lw)[0] for points in points_traj]
-    for i in [0, -1]:
-        link_traj[i].set_alpha(ends_alpha)
-        link_traj[i].set_path_effects([path_effects.SimpleLineShadow(), path_effects.Normal()])
-        joint_traj[i].set_alpha(ends_alpha)
-        eff_traj[i].set_alpha(ends_alpha)
+    link_traj = [ax.plot(points[:, 0], points[:, 1], color='gray', alpha=ends_alpha, lw=lw, solid_capstyle='round')[0] for points in points_traj]
+    joint_traj = [ax.plot(points[:-1, 0], points[:-1, 1], 'o', color='tab:red', alpha=ends_alpha, markersize=lw)[0] for points in points_traj]
+    eff_traj = [ax.plot(points[-1:, 0], points[-1:, 1], 'o', color='black', alpha=ends_alpha, markersize=lw)[0] for points in points_traj]
     link_traj[0].set_color('green')
-    link_traj[-1].set_color('orange')
-
     offset = torch.FloatTensor([[0, 0], [0, 1], [-1, 1], [-1, 0]]) * np.pi*2
     for i, cfg_path in enumerate(cfg_path_plots):
         cfg_path.set_data(p[:, 0]+offset[i%4, 0], p[:, 1]+offset[i%4, 1])
 
-def main():
+def create_plots(robot, obstacles, dist_est, checker):
+    from matplotlib.cm import get_cmap
+    cmaps = [get_cmap('Reds'), get_cmap('Blues')]
+    if robot.dof == 2:
+        # Show C-space at the same time
+        num_class = getattr(checker, 'num_class', 1)
+        fig = plt.figure(figsize=(3*(num_class), 3*(num_class+1)))
+        plt.rcParams.update({
+            "text.usetex": True,
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Helvetica"]})
+        gs = fig.add_gridspec(num_class+1, num_class)
+        ax = fig.add_subplot(gs[:-1, :])
+        cfg_path_plots = []
+        size = [400, 400]
+        yy, xx = torch.meshgrid(torch.linspace(-np.pi, np.pi, size[0]), torch.linspace(-np.pi, np.pi, size[1]))
+        grid_points = torch.stack([xx, yy], dim=2).reshape((-1, 2))
+        grid_points = grid_points.double() if checker.support_points.dtype == torch.float64 else grid_points
+        score_spline = dist_est(grid_points).reshape(size+[num_class])
+        c_axes = []
+        with sns.axes_style('ticks'): # 그리드가 없음
+            for cat in range(num_class):
+                c_ax = fig.add_subplot(gs[-1, cat])
+                score = score_spline[:, :, cat] # estimated score grid
+                c_ax.contourf(xx, yy, score, 8, cmap='coolwarm', vmin=-torch.abs(score).max(), vmax=torch.abs(score).max())
+                contour = c_ax.contour(xx, yy, score, levels=8, linewidths=1, colors="k") 
+                plt.clabel(contour, inline=1, fontsize=7)
+                for _ in range(4):
+                    cfg_path, = c_ax.plot([], [], '-o', c='olivedrab', markersize=3)
+                    cfg_path_plots.append(cfg_path)
+                c_ax.set_aspect('equal', adjustable='box')
+                c_ax.set_xlim(-np.pi, np.pi)
+                c_ax.set_ylim(-np.pi, np.pi)
+                c_ax.set_xticks([-np.pi, 0, np.pi])
+                c_ax.set_xticklabels(['$-\pi$', '$0$', '$\pi$'])
+                c_ax.set_yticks([-np.pi, 0, np.pi])
+                c_ax.set_yticklabels(['$-\pi$', '$0$', '$\pi$'])
+    else:
+        raise Exception("??")
+    # Plot ostacles
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-8, 8)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xticks([-4, 0, 4])
+    ax.set_yticks([-4, 0, 4])
+    for obs in obstacles:
+        cat = obs[3] if len(obs) >= 4 else 1
+        if obs[0] == 'circle':
+            ax.add_patch(Circle(obs[1], obs[2], path_effects=[path_effects.withSimplePatchShadow()], color=cmaps[cat](0.5)))
+        elif obs[0] == 'rect':
+            ax.add_patch(Rectangle((obs[1][0]-float(obs[2][0])/2, obs[1][1]-float(obs[2][1])/2), obs[2][0], obs[2][1], path_effects=[path_effects.withSimplePatchShadow()], 
+            color=cmaps[cat](0.5)))
+    # Placeholder of the robot plot
+    trans = ax.transData.transform
+    lw = ((trans((1, robot.link_width))-trans((0,0)))*72/ax.figure.dpi)[1]
+    link_plot, = ax.plot([], [], color='silver', alpha=0.1, lw=lw, solid_capstyle='round', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+    joint_plot, = ax.plot([], [], 'o', color='tab:red', markersize=lw)
+    eff_plot, = ax.plot([], [], 'o', color='black', markersize=lw)
+    if robot.dof > 2:
+        return fig, ax, link_plot, joint_plot, eff_plot
+    elif robot.dof == 2:
+        return fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots
+
+def create_plots_gt(robot, obstacles, dist_est):
+    from matplotlib.cm import get_cmap
+    cmaps = [get_cmap('Reds'), get_cmap('Blues')]
+    if robot.dof == 2:
+        num_class = 1
+        fig = plt.figure(figsize=(3*(num_class), 3*(num_class+1)))
+        plt.rcParams.update({
+            "text.usetex": True,
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Helvetica"]})
+        gs = fig.add_gridspec(num_class+1, num_class)
+        ax = fig.add_subplot(gs[:-1, :])
+        cfg_path_plots = []
+        size = [400, 400]
+        yy, xx = torch.meshgrid(torch.linspace(-np.pi, np.pi, size[0]), torch.linspace(-np.pi, np.pi, size[1]))
+        grid_points = torch.stack([xx, yy], dim=2).reshape((-1, 2))
+        grid_points = grid_points.double()
+        _, score_spline = dist_est(grid_points)
+        score_spline = score_spline.reshape(size+[num_class]).double()
+        c_axes = []
+        with sns.axes_style('ticks'): # 그리드가 없음
+            for cat in range(num_class):
+                c_ax = fig.add_subplot(gs[-1, cat])
+                score = score_spline[:, :, cat] # estimated score grid
+                c_ax.contourf(xx, yy, score, 8, cmap='coolwarm', vmin=-torch.abs(score).max(), vmax=torch.abs(score).max())
+                contour = c_ax.contour(xx, yy, score, levels=8, linewidths=1, colors="k") 
+                plt.clabel(contour, inline=1, fontsize=7)
+                for _ in range(4):
+                    cfg_path, = c_ax.plot([], [], '-o', c='olivedrab', markersize=3)
+                    cfg_path_plots.append(cfg_path)
+                c_ax.set_aspect('equal', adjustable='box')
+                c_ax.set_xlim(-np.pi, np.pi)
+                c_ax.set_ylim(-np.pi, np.pi)
+                c_ax.set_xticks([-np.pi, 0, np.pi])
+                c_ax.set_xticklabels(['$-\pi$', '$0$', '$\pi$'])
+                c_ax.set_yticks([-np.pi, 0, np.pi])
+                c_ax.set_yticklabels(['$-\pi$', '$0$', '$\pi$'])
+    else:
+        raise Exception("??")
+    # Plot ostacles
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-8, 8)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xticks([-4, 0, 4])
+    ax.set_yticks([-4, 0, 4])
+    for obs in obstacles:
+        cat = obs[3] if len(obs) >= 4 else 1
+        if obs[0] == 'circle':
+            ax.add_patch(Circle(obs[1], obs[2], path_effects=[path_effects.withSimplePatchShadow()], color=cmaps[cat](0.5)))
+        elif obs[0] == 'rect':
+            ax.add_patch(Rectangle((obs[1][0]-float(obs[2][0])/2, obs[1][1]-float(obs[2][1])/2), obs[2][0], obs[2][1], path_effects=[path_effects.withSimplePatchShadow()], 
+            color=cmaps[cat](0.5)))
+    # Placeholder of the robot plot
+    trans = ax.transData.transform
+    lw = ((trans((1, robot.link_width))-trans((0,0)))*72/ax.figure.dpi)[1]
+    link_plot, = ax.plot([], [], color='silver', alpha=0.1, lw=lw, solid_capstyle='round', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+    joint_plot, = ax.plot([], [], 'o', color='tab:red', markersize=lw)
+    eff_plot, = ax.plot([], [], 'o', color='black', markersize=lw)
+    if robot.dof > 2:
+        return fig, ax, link_plot, joint_plot, eff_plot
+    elif robot.dof == 2:
+        return fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots
+
+def main(checking_method = 'diffco'):
     # Set envs
     DOF = 2
     env_name = '1rect_active'
@@ -77,58 +200,40 @@ def main():
     labels, dists = gt_checker.predict(cfgs[:train_num], distance=True)
     labels = labels.double()
     dists = dists.double()
-    ### Train and Get DiffCo checker
-    # Train DiffCo
-    fkine = robot.fkine
-    checker = DiffCo(obj_obstacles, kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), beta=1.0)
-    """print("cfgs[:train_num].shape:", cfgs[:train_num].shape) # [6000, 2]
-    print("labels[:train_num].shape:", labels[:train_num].shape) # 6000
-    print("distance[:train_num].shape:", dists[:train_num].shape) # 6000"""
-    checker.train(cfgs[:train_num], labels[:train_num].squeeze(), max_iteration=len(cfgs[:train_num]), distance=dists[:train_num].squeeze())
-    print('Num of support points {}'.format(len(checker.support_points))) # [32, 2]; 개수는 자동으로 정해지는 듯
-    # Get DiffCo
-    fitting_target = 'dist'
-    Epsilon = 0.01
-    checker.fit_poly(kernel_func=kernel.Polyharmonic(1, Epsilon), target=fitting_target, fkine=fkine) 
-    dist_est = checker.rbf_score # 위의 polyharmonic 함수
-    print('MIN_SCORE = {:.6f}'.format(dist_est(cfgs[train_num:]).min()))
-
-    #=====================================================================================================
-    """# Check DiffCo test ACC
-    test_preds = (checker.score(cfgs[train_num:]) > 0) * 2 - 1
-    test_acc = torch.sum(test_preds == labels[train_num:], dtype=torch.float32)/len(test_preds.view(-1))
-    test_tpr = torch.sum(test_preds[labels[train_num:]==1] == 1, dtype=torch.float32) / len(test_preds[labels[train_num:]==1])
-    test_tnr = torch.sum(test_preds[labels[train_num:]==-1] == -1, dtype=torch.float32) / len(test_preds[labels[train_num:]==-1])
-    print('Test acc: {}, TPR {}, TNR {}'.format(test_acc, test_tpr, test_tnr))
-    print(len(checker.gains), 'Support Points')"""
-    # Optimization Method
-    checking_method = 'diffco'
+    # Checking Method
     if checking_method == 'diffco':
-        diffco_options = {
-            'N_WAYPOINTS': 20,
-            'NUM_RE_TRIALS': 5, 
-            'MAXITER': 200,
-            'safety_margin': -0.1, 
-            'seed': seed,
-            'history': False
-        }
-    # Check Collision in start or end
-    if torch.any(checker.predict(torch.stack([start_cfg, target_cfg], dim=0)) == 1):
-        raise Exception("Collision in start or target.")
-    # Create Plots
-    fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots(robot, obstacles, dist_est, checker)
-    """# Optimization
-    ot = time()
-    if checking_method == 'diffco':
-        solution_rec = givengrad_traj_optimize(
-            robot, dist_est, start_cfg, target_cfg, options=diffco_options)
-        p = torch.FloatTensor(solution_rec['solution'])
-    plan_ts = time()-ot
-    # Make Continuous (-pi and pi)
-    p = utils.make_continue(p)"""
-    ################################################# p가 뭔지 확인해야 함!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ### Train and Get DiffCo checker
+        # Train DiffCo
+        fkine = robot.fkine
+        checker = DiffCo(obj_obstacles, kernel_func=kernel.FKKernel(fkine, kernel.RQKernel(10)), beta=1.0)
+        """print("cfgs[:train_num].shape:", cfgs[:train_num].shape) # [6000, 2]
+        print("labels[:train_num].shape:", labels[:train_num].shape) # 6000
+        print("distance[:train_num].shape:", dists[:train_num].shape) # 6000"""
+        checker.train(cfgs[:train_num], labels[:train_num].squeeze(), max_iteration=len(cfgs[:train_num]), distance=dists[:train_num].squeeze())
+        print('Num of support points {}'.format(len(checker.support_points))) # [32, 2]; 개수는 자동으로 정해지는 듯
+        # Get DiffCo
+        fitting_target = 'dist'
+        Epsilon = 0.01
+        checker.fit_poly(kernel_func=kernel.Polyharmonic(1, Epsilon), target=fitting_target, fkine=fkine) 
+        dist_est = checker.rbf_score # 위의 polyharmonic 함수
+        print('MIN_SCORE = {:.6f}'.format(dist_est(cfgs[train_num:]).min()))
+        """# Check DiffCo test ACC
+        test_preds = (checker.score(cfgs[train_num:]) > 0) * 2 - 1
+        test_acc = torch.sum(test_preds == labels[train_num:], dtype=torch.float32)/len(test_preds.view(-1))
+        test_tpr = torch.sum(test_preds[labels[train_num:]==1] == 1, dtype=torch.float32) / len(test_preds[labels[train_num:]==1])
+        test_tnr = torch.sum(test_preds[labels[train_num:]==-1] == -1, dtype=torch.float32) / len(test_preds[labels[train_num:]==-1])
+        print('Test acc: {}, TPR {}, TNR {}'.format(test_acc, test_tpr, test_tnr))
+        print(len(checker.gains), 'Support Points')"""
+        # Create Plots
+        fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots(robot, obstacles, dist_est, checker)
+    elif checking_method == 'fcl':
+        fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots_gt(robot, obstacles, gt_checker.predict)
+        pass
+    else:
+        pass
     # Single Plot and Save
-    single_plot(robot, p, fig, link_plot, joint_plot, eff_plot, cfg_path_plots=cfg_path_plots, ax=ax)
+    start_cfg_uq = start_cfg.unsqueeze(0)
+    single_plot(robot, start_cfg_uq, fig, link_plot, joint_plot, eff_plot, cfg_path_plots=cfg_path_plots, ax=ax)
     fig_dir = 'figs/my_test/{random_seed}/{checking_method}'.format(random_seed=seed, checking_method=checking_method)
     if not isdir(fig_dir):
         makedirs(fig_dir)
@@ -138,4 +243,5 @@ def main():
     print('{} summary'.format(checking_method))
 
 if __name__ == "__main__":
-    main()
+    main(checking_method = 'diffco')
+    main(checking_method = 'fcl')
