@@ -149,6 +149,25 @@ def create_plots_gt(robot, obstacles, dist_est):
     elif robot.dof == 2:
         return fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots
 
+def create_plots_gt_3d(robot, obstacles, dist_est):
+    size = [400, 400]
+    yy, xx = torch.meshgrid(torch.linspace(-np.pi, np.pi, size[0]), torch.linspace(-np.pi, np.pi, size[1]))
+    grid_points = torch.stack([xx, yy], dim=2).reshape((-1, 2))
+    grid_points = grid_points.double()
+    _, score_spline = dist_est(grid_points)
+    score = score_spline.reshape(size).double()
+    print("Score cal done.")
+    # FCL 
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection='3d')
+    surf1 = ax1.plot_surface(xx.numpy(),yy.numpy(),score.numpy(),rstride=2,cstride=2,cmap=plt.cm.coolwarm,linewidth=0.5,antialiased=True,vmin=np.nanmin(score),vmax=np.nanmax(score))
+    ax1.set_xlabel('x axis')
+    ax1.set_ylabel('y axis')
+    ax1.set_zlabel('z axis')
+    plt.colorbar(surf1,shrink=0.5,aspect=5)
+    plt.title("FCL")
+    plt.show()
+
 def main(checking_method = 'diffco'):
     # Set envs
     DOF = 2
@@ -165,7 +184,6 @@ def main(checking_method = 'diffco'):
     obstacles = [list(o) for o in dataset['obs']]
     obj_obstacles = [Obstacle(*param) for param in obstacles]
     robot = dataset['robot'](*dataset['rparam'])
-
     #=================================================================================================================================
     # Get FCL Obj of Obstacles
     fcl_obs = [FCLObstacle(*param) for param in obstacles]
@@ -228,7 +246,9 @@ def main(checking_method = 'diffco'):
         fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots(robot, obstacles, dist_est, checker)
     elif checking_method == 'fcl':
         fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots_gt(robot, obstacles, gt_checker.predict)
-        pass
+    elif checking_method == 'fcl_3d':
+        create_plots_gt_3d(robot, obstacles, gt_checker.predict)
+        exit()
     else:
         pass
     # Single Plot and Save
@@ -243,5 +263,6 @@ def main(checking_method = 'diffco'):
     print('{} summary'.format(checking_method))
 
 if __name__ == "__main__":
-    main(checking_method = 'diffco')
-    main(checking_method = 'fcl')
+    # main(checking_method = 'diffco')
+    # main(checking_method = 'fcl')
+    main(checking_method='fcl_3d')
