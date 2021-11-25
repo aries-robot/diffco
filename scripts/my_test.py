@@ -182,8 +182,8 @@ def main(checking_method = 'diffco'):
     labels = dataset['label'].reshape(-1, 1).double()
     dists = dataset['dist'].reshape(-1, 1).double() 
     obstacles = [list(o) for o in dataset['obs']]
-    obj_obstacles = [Obstacle(*param) for param in obstacles]
-    robot = dataset['robot'](*dataset['rparam'])
+    obj_obstacles = [Obstacle(*param) for param in obstacles] # 'rect', position: (-7, 3), size: (2, 2) # dataset['obs']: [('rect', (-7, 3), (2, 2))]
+    robot = dataset['robot'](*dataset['rparam']) # link_length: 3.5, link_width: 0.3, DOF: 2 # dataset['rparam']: [3.5, 0.3, 2]
     #=================================================================================================================================
     # Get FCL Obj of Obstacles
     fcl_obs = [FCLObstacle(*param) for param in obstacles]
