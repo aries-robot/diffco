@@ -194,7 +194,7 @@ def main(DOF, env_name, lmbda=10):
         checker.train(cfgs[indices], labels[indices], max_iteration=len(cfgs[indices]), distance=dists[indices],
             keep_all=keep_all)
     print(checker.support_points.shape)
-    exit()
+    
 
     # Check DiffCo test ACC
     test_preds = (checker.score(cfgs[train_num:]) > 0) * 2 - 1
@@ -314,7 +314,7 @@ def main(DOF, env_name, lmbda=10):
     print('{}DOF, environment {}, with FK {}, r-squared: {}'.format(DOF, env_name, checker.fkine is not None, r_value**2))
     ax.text(xlim_max/4, -7*ylim_max/8, '$\\mathrm{R}^2='+('{:.4f}$'.format(r_value**2)), fontsize=15, 
         bbox=dict(boxstyle='round', facecolor='wheat', alpha=1))#, fontdict={"family": "Times New Roman",})
-    ax.set_title('{} original supports, {} random samples'.format(checker.num_origin_supports, checker.n_left_out_points))
+    # ax.set_title('{} original supports, {} random samples'.format(checker.num_origin_supports, checker.n_left_out_points))
 
     plt.show()
     # plt.savefig('figs/correlation/training_{}dof_{}_{}_{}ransample_rsquare.png'.format(DOF, env_name, 'hybriddiffco', checker.n_left_out_points))

@@ -235,13 +235,17 @@ def main(checking_method = 'diffco'):
         checker.fit_poly(kernel_func=kernel.Polyharmonic(1, Epsilon), target=fitting_target, fkine=fkine) 
         dist_est = checker.rbf_score # 위의 polyharmonic 함수
         print('MIN_SCORE = {:.6f}'.format(dist_est(cfgs[train_num:]).min()))
-        """# Check DiffCo test ACC
-        test_preds = (checker.score(cfgs[train_num:]) > 0) * 2 - 1
-        test_acc = torch.sum(test_preds == labels[train_num:], dtype=torch.float32)/len(test_preds.view(-1))
-        test_tpr = torch.sum(test_preds[labels[train_num:]==1] == 1, dtype=torch.float32) / len(test_preds[labels[train_num:]==1])
-        test_tnr = torch.sum(test_preds[labels[train_num:]==-1] == -1, dtype=torch.float32) / len(test_preds[labels[train_num:]==-1])
+        # Check DiffCo test ACC
+        # Train:Test = 6000:2000
+        # collision: 1, free: -1
+        test_gt_labels, test_gt_dists = gt_checker.predict(cfgs[train_num:], distance=True)
+        test_preds = (dist_est(cfgs[train_num:]) > 0) * 2 - 1
+        test_acc = torch.sum(test_preds == test_gt_labels, dtype=torch.float32)/len(test_preds.view(-1))
+        test_tpr = torch.sum(test_preds[test_gt_labels==1] == 1, dtype=torch.float32) / len(test_preds[test_gt_labels==1])
+        test_tnr = torch.sum(test_preds[test_gt_labels==-1] == -1, dtype=torch.float32) / len(test_preds[test_gt_labels==-1])
         print('Test acc: {}, TPR {}, TNR {}'.format(test_acc, test_tpr, test_tnr))
-        print(len(checker.gains), 'Support Points')"""
+        print(len(checker.gains), 'Support Points')
+        exit()
         # Create Plots
         fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots(robot, obstacles, dist_est, checker)
     elif checking_method == 'fcl':
@@ -263,6 +267,6 @@ def main(checking_method = 'diffco'):
     print('{} summary'.format(checking_method))
 
 if __name__ == "__main__":
-    # main(checking_method = 'diffco')
+    main(checking_method = 'diffco')
     # main(checking_method = 'fcl')
-    main(checking_method='fcl_3d')
+    # main(checking_method='fcl_3d')
