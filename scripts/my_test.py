@@ -244,9 +244,13 @@ def main(checking_method = 'diffco'):
         test_tpr = torch.sum(test_preds[test_gt_labels==1] == 1, dtype=torch.float32) / len(test_preds[test_gt_labels==1])
         test_tnr = torch.sum(test_preds[test_gt_labels==-1] == -1, dtype=torch.float32) / len(test_preds[test_gt_labels==-1])
         print('Test acc: {}, TPR {}, TNR {}'.format(test_acc, test_tpr, test_tnr))
-        print(len(checker.gains), 'Support Points')
-        exit()
+
+
+
+
+
         # Create Plots
+        print(len(checker.gains), 'Support Points')
         fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots(robot, obstacles, dist_est, checker)
     elif checking_method == 'fcl':
         fig, ax, link_plot, joint_plot, eff_plot, cfg_path_plots = create_plots_gt(robot, obstacles, gt_checker.predict)

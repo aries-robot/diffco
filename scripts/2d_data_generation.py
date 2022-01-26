@@ -20,10 +20,10 @@ from time import time
 
 if __name__ == "__main__":
     # ========================== Data generqation =========================
-    env_name = '1rect_1circle_7d' # 
+    env_name = '1rect_active_ys' # 
     label_type = 'binary' #[instance, class, binary]
     num_class = 2
-    DOF = 7
+    DOF = 2
 
     obstacles = {
         # ('circle', (3, 2), 2), #2circle
@@ -33,33 +33,35 @@ if __name__ == "__main__":
         # ('rect', (-1.7, 3), (2, 3)),
         # ('rect', (0, -1), (10, 1)),
         # ('rect', (8, 7), 1),
-        '1rect_1circle': [('rect', (4, 3), (2, 2)),
-            ('circle', (-4, -3), 1)],
-        # ('rect', (4, 3), (2, 2)), # 2rect
-        # ('rect', (-4, -3), (2, 2)) # 2rect
-        # ('rect', (3, 2), (2, 2)) # 1rect
-        '3circle': [
-            ('circle', (0, 4.5), 1), #3circle
-            ('circle', (-2, -3), 2), #3circle
-            ('circle', (-2, 2), 1.5), #3circle
-        ],
-        '1rect_1circle_7d': [
-            ('circle', (-2, 3), 1), #1rect_1circle_7d
-            ('rect', (3, 2), (2, 2)) #1rect_1circle_7d
-        ],
-        # ('rect', (5, 0), (2, 2), 0), #2class_1
-        # ('circle', (-3, 6), 1, 1), #2class_1
-        # ('rect', (-5, 2), (2, 1.5), 1), #2class_1
-        # ('circle', (-5, -2), 1.5, 1), #2class_1 
-        # ('circle', (-3, -6), 1, 1) #2class_1
-        # ('rect', (0, 3), (16, 0.5), 1), #2class_2
-        # ('rect', (0, -3), (16, 0.5), 0), #2class_2
-        # ('rect', (-7, 3), (2, 2)) #1rect_active
-        '3circle_7d': [
-            ('circle', (-2, 2), 1), #3circle_7d
-            ('circle', (-3, 3), 1), #3circle
-            ('circle', (-6, -3), 1) #3circle
+        # '1rect_1circle': [('rect', (4, 3), (2, 2)),
+        #     ('circle', (-4, -3), 1)],
+        # # ('rect', (4, 3), (2, 2)), # 2rect
+        # # ('rect', (-4, -3), (2, 2)) # 2rect
+        # # ('rect', (3, 2), (2, 2)) # 1rect
+        # '3circle': [
+        #     ('circle', (0, 4.5), 1), #3circle
+        #     ('circle', (-2, -3), 2), #3circle
+        #     ('circle', (-2, 2), 1.5), #3circle
+        # ],
+        # '1rect_1circle_7d': [
+        #     ('circle', (-2, 3), 1), #1rect_1circle_7d
+        #     ('rect', (3, 2), (2, 2)) #1rect_1circle_7d
+        # ],
+        # # ('rect', (5, 0), (2, 2), 0), #2class_1
+        # # ('circle', (-3, 6), 1, 1), #2class_1
+        # # ('rect', (-5, 2), (2, 1.5), 1), #2class_1
+        # # ('circle', (-5, -2), 1.5, 1), #2class_1 
+        # # ('circle', (-3, -6), 1, 1) #2class_1
+        # # ('rect', (0, 3), (16, 0.5), 1), #2class_2
+        # # ('rect', (0, -3), (16, 0.5), 0), #2class_2
+        '1rect_active_ys':[
+        ('rect', (-7, 3), (2, 2)) #1rect_active
         ]
+        # '3circle_7d': [
+        #     ('circle', (-2, 2), 1), #3circle_7d
+        #     ('circle', (-3, 3), 1), #3circle
+        #     ('circle', (-6, -3), 1) #3circle
+        # ]
         # ('rect', (5, 4), (4, 4), 0), #2instance_big
         # ('circle', (-5, -4), 2, 1) #2instance_big
     }
@@ -69,12 +71,12 @@ if __name__ == "__main__":
     # geom2instnum = {id(g): i for i, (_, g) in enumerate(fcl_obs)}
     
     width = 0.3
-    link_length = 1
+    link_length = 3.5
     robot = RevolutePlanarRobot(link_length, width, DOF) # (7, 1), (2, 3)
 
     np.random.seed(1917)
     torch.random.manual_seed(1917)
-    num_init_points = 8000
+    num_init_points = 60000
     if 'compare' not in env_name or DOF > 2:
         cfgs = 2*(torch.rand((num_init_points, DOF), dtype=torch.float32)-0.5) * np.pi
     else:
@@ -147,6 +149,24 @@ if __name__ == "__main__":
     print('{} collisons, {} free'.format(torch.sum(in_collision==1), torch.sum(in_collision==0)))
     dataset = {'data': cfgs, 'label': labels, 'dist': dists, 'obs': obstacles, 'robot': robot.__class__, 'rparam': [link_length, width, DOF, ]}
     torch.save(dataset, 'data/2d_{}dof_{}.pt'.format(DOF, env_name))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # ========================== Data generqation =========================
 
     # DOF = 2

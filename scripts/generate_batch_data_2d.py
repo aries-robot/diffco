@@ -175,9 +175,9 @@ if __name__ == "__main__":
     batch_name = 'exp1'
 
     label_type = 'binary' #[instance, class, binary]
-    DOF, link_length, seed = 7, 1, 1919
+    # DOF, link_length, seed = 7, 1, 1919
     # DOF, link_length, seed = 3, 2, 1918
-    # DOF, link_length, seed = 2, 3.5, 1917
+    DOF, link_length, seed = 2, 3.5, 1917
     
     width = 0.3
     robot = RevolutePlanarRobot(link_length, width, DOF)
