@@ -25,15 +25,17 @@ class Obstacle:
         return self.cost
 
 class FCLObstacle:
-    def __init__(self, shape, position, size, category=None):
+    def __init__(self, shape, position, size, rot, category=None):
         self.size = size
         self.position = position
         if shape == 'circle':
-            pos_3d = torch.FloatTensor([position[0], position[1], 0])
+            self.quat = np.array([1, 0.0, 0.0, 0]) # [w,x,y,z]
+            self.pos_3d = torch.FloatTensor([position[0], position[1], 0])
             self.geom = fcl.Cylinder(size, 1000)
         elif shape == 'rect':
-            pos_3d = torch.FloatTensor([position[0], position[1], 0])
+            self.quat = np.array([np.cos(rot/2), 0.0, 0.0, np.sin(rot/2)]) # [w,x,y,z]
+            self.pos_3d = torch.FloatTensor([position[0], position[1], 0])
             self.geom = fcl.Box(size[0], size[1], 1000)
 
-        self.cobj = fcl.CollisionObject(self.geom, fcl.Transform(pos_3d))
+        self.cobj = fcl.CollisionObject(self.geom, fcl.Transform(self.quat, self.pos_3d))
         self.category = category
