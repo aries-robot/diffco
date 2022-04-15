@@ -284,7 +284,7 @@ def traj_optimize(robot, start_cfg, target_cfg, dist_est, initial_guess=None, hi
         init_path[-1] = target_cfg
         p = init_path.requires_grad_(True)
         opt = torch.optim.Adam([p], lr=lr)
-
+        
         for step in range(UPDATE_STEPS):
             opt.zero_grad()
             assert p.dtype == torch.float

@@ -2,8 +2,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from mlxtend.plotting import plot_decision_regions
-from DiffCo import *
-from MultiDiffCo import *
+from diffco.DiffCo import *
+from diffco.MultiDiffCo import *
 
 def euclidean_dist(a, b):
     return np.linalg.norm(a-b)
@@ -58,7 +58,6 @@ class RRT_STAR:
         # print(np.linalg.norm(a-b)*(1+(cost_a+cost_b)/2))
         return np.linalg.norm(a-b)*(1+cost)
         
-    
     def plan(self, max_tree_size=10000, animate_interval=50):
         start_node = self.Node(self.start, dist=0)
         self.node_list.append(start_node)
