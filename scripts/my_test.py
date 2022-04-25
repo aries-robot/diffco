@@ -1,4 +1,5 @@
-# After DiffCo Change: python setup.py install
+# After DiffCo Change: 
+# python setup.py install
 #
 # matplotlib tex 사용법:
 # sudo apt-get install texlive texlive-latex-extra texlive-fonts-recommended dvipng cm-super
