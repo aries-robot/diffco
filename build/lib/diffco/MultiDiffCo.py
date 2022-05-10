@@ -43,13 +43,14 @@ class MultiDiffCo(DiffCo):
         self.gains = self.gains[non_zero_weight_cnt != 0]
 
         time_elapsed = time() - time_start
-        print('{} training done. {:.4f} secs cost'.format(method, time_elapsed))
+        # print('{} training done. {:.4f} secs cost'.format(method, time_elapsed))
 
     def train_perceptron(self, X, y, max_iteration=1000, gains=None, hypothesis=None): #, kernel_matrix=None):
         self.initialize(X, y, gains=gains, hypothesis=hypothesis)# , kernel_matrix=kernel_matrix)
         complete = torch.zeros(self.num_class, dtype=torch.bool)
 
-        print('MultiDiffCo training...')
+        # print('MultiDiffCo training...')
+        # for it in tqdm(range(max_iteration)):
         for it in tqdm(range(max_iteration)):
             margin = self.y * self.hypothesis
             
@@ -77,7 +78,7 @@ class MultiDiffCo(DiffCo):
             if torch.min(complete):
                 break
         
-        print('Ended at iteration {}'.format(it))
+        # print('Ended at iteration {}'.format(it))
 
     def train_sgd(self, max_iteration=1000):
         raise NotImplementedError
@@ -133,8 +134,8 @@ class MultiDiffCo(DiffCo):
             y = self.y
         self.rbf_kernel = kernel.MultiQuadratic(1) if kernel_func is None else kernel_func
         kmat = self.rbf_kernel(X, X)
-        print(X.shape)
-        print(kmat.shape)
+        # print(X.shape)
+        # print(kmat.shape)
 
         # min_d, min_i = (kmat+torch.eye(len(kmat)).fill_diagonal_(float('inf'))).min(dim=0)
         # plt.plot(range(len(kmat)), min_d)
@@ -147,7 +148,7 @@ class MultiDiffCo(DiffCo):
             cidx = c_iszero.repeat([len(c_nonzero), 1]).reshape(-1)
             kmat[ridx, cidx] = 0
             kmat[cidx, ridx] = 0
-        print(y.dtype, kmat.dtype)
+        # print(y.dtype, kmat.dtype)
         self.rbf_nodes = torch.solve(y, kmat+reg*torch.eye(len(kmat), dtype=kmat.dtype)).solution
         for c in range(self.num_class):
             self.rbf_nodes[self.gains == 0] = 0
