@@ -51,7 +51,7 @@ class MultiDiffCo(DiffCo):
 
         # print('MultiDiffCo training...')
         # for it in tqdm(range(max_iteration)):
-        for it in tqdm(range(max_iteration)):
+        for it in range(max_iteration):
             margin = self.y * self.hypothesis
             
             for c in range(self.num_class):
