@@ -25,7 +25,7 @@ class Obstacle:
         return self.cost
 
 class FCLObstacle:
-    def __init__(self, shape, position, size, rot, category=None, height=1000):
+    def __init__(self, shape, position, size, rot=0.0, category=None, height=1000):
         self.shape = shape
         self.size = size
         self.position = position
