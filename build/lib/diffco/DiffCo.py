@@ -188,9 +188,7 @@ class DiffCo(CollisionChecker):
             y = self.distance
         elif 'label' in target:
             y = self.y
-        self.poly_nodes = torch.solve(
-            torch.cat([y, torch.zeros(X.shape[1]+1)], dim=0).reshape(-1, 1),
-            L).solution.reshape(-1)
+        self.poly_nodes = torch.linalg.solve(L, torch.cat([y, torch.zeros(X.shape[1]+1)], dim=0).reshape(-1, 1)).reshape(-1)
     
     def poly_score(self, point):
         if point.ndim == 1:

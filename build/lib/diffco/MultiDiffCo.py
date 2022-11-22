@@ -149,7 +149,7 @@ class MultiDiffCo(DiffCo):
             kmat[ridx, cidx] = 0
             kmat[cidx, ridx] = 0
         # print(y.dtype, kmat.dtype)
-        self.rbf_nodes = torch.solve(y, kmat+reg*torch.eye(len(kmat), dtype=kmat.dtype)).solution
+        self.rbf_nodes = torch.linalg.solve(kmat+reg*torch.eye(len(kmat), dtype=kmat.dtype), y)
         for c in range(self.num_class):
             self.rbf_nodes[self.gains == 0] = 0
         assert self.rbf_nodes.shape == (len(self.support_points), self.num_class)
@@ -190,9 +190,7 @@ class MultiDiffCo(DiffCo):
             y = self.distance
         elif 'label' in target:
             y = self.y
-        self.poly_nodes = torch.solve(
-            torch.cat([y, torch.zeros(X.shape[1]+1, self.num_class)], dim=0),
-            L).solution
+        self.poly_nodes = torch.linalg.solve(L, torch.cat([y, torch.zeros(X.shape[1]+1, self.num_class)], dim=0))
     
     def poly_score(self, point):
         if point.ndim == 1:

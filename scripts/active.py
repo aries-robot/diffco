@@ -202,10 +202,10 @@ def single_plot(robot, p, fig, link_plot, joint_plot, eff_plot, cfg_path_plots=N
         eff_traj[i].set_alpha(ends_alpha)
     link_traj[0].set_color('green')
     link_traj[-1].set_color('orange')
-
     offset = torch.FloatTensor([[0, 0], [0, 1], [-1, 1], [-1, 0]]) * np.pi*2
-    for i, cfg_path in enumerate(cfg_path_plots):
-        cfg_path.set_data(p[:, 0]+offset[i%4, 0], p[:, 1]+offset[i%4, 1])
+    if cfg_path_plots != None:
+        for i, cfg_path in enumerate(cfg_path_plots):
+            cfg_path.set_data(p[:, 0]+offset[i%4, 0], p[:, 1]+offset[i%4, 1])
 
 
 def escape(robot, dist_est, start_cfg):
@@ -408,4 +408,4 @@ def main(checking_method='diffco'):
 
 if __name__ == "__main__":
     main(checking_method='diffco')
-    main(checking_method='fcl')
+    # main(checking_method='fcl')

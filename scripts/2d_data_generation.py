@@ -16,6 +16,38 @@ import matplotlib.patheffects as path_effects
 from diffco import utils
 from diffco.Obstacles import FCLObstacle
 from time import time
+from active import single_plot
+from matplotlib.cm import get_cmap
+
+def creat_plot(robot, obstacles):
+    cmaps = [get_cmap('Reds'), get_cmap('Blues')]
+    fig = plt.figure(figsize=(3*(num_class), 3*(num_class+1)))
+    plt.rcParams.update({
+            "text.usetex": True,
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Helvetica"]})
+    gs = fig.add_gridspec(num_class+1, num_class)
+    ax = fig.add_subplot(gs[:-1, :])
+    # Plot ostacles
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-8, 8)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xticks([-4, 0, 4])
+    ax.set_yticks([-4, 0, 4])
+    for obs in obstacles:
+        cat = obs[3] if len(obs) >= 4 else 1
+        if obs[0] == 'circle':
+            ax.add_patch(Circle(obs[1], obs[2], path_effects=[path_effects.withSimplePatchShadow()], color=cmaps[cat](0.5)))
+        elif obs[0] == 'rect':
+            ax.add_patch(Rectangle((obs[1][0]-float(obs[2][0])/2, obs[1][1]-float(obs[2][1])/2), obs[2][0], obs[2][1], path_effects=[path_effects.withSimplePatchShadow()], 
+            color=cmaps[cat](0.5)))
+    # Plot robot
+    trans = ax.transData.transform
+    lw = ((trans((1, robot.link_width))-trans((0,0)))*72/ax.figure.dpi)[1]
+    link_plot, = ax.plot([], [], color='silver', alpha=0.1, lw=lw, solid_capstyle='round', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+    joint_plot, = ax.plot([], [], 'o', color='tab:red', markersize=lw)
+    eff_plot, = ax.plot([], [], 'o', color='black', markersize=lw)
+    return fig, ax, link_plot, joint_plot, eff_plot
 
 
 if __name__ == "__main__":
@@ -134,6 +166,10 @@ if __name__ == "__main__":
             labels[i, cat] = 1 if in_collision else -1
             dists[i, cat] = depths.abs().max() if in_collision else -ddata.result.min_distance
         end1 = time()
+        ### PLOT
+        fig, ax, link_plot, joint_plot, eff_plot = creat_plot(robot, obstacles)
+        single_plot(robot, utils.make_continue(cfg.unsqueeze(0)), fig, link_plot, joint_plot, eff_plot, ax=ax)
+        plt.show()
         times.append(end1-st1)
     end = time()
     times = np.array(times)

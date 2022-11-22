@@ -1,11 +1,10 @@
 .vscode/
 __pycache__
-results/
+
 .devcontainer/
 docker/
 run_image.bash
-data/*/
-figs/
+
 visual/
 *.png
 .ipynb_checkpoints/

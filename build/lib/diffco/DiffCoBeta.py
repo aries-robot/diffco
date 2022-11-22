@@ -103,7 +103,7 @@ class DiffCoBeta(DiffCo):
             self.kernel_matrix = self.kernel_matrix[self.gains != 0][:, self.gains != 0]
             '''
             
-            self.gains = torch.solve(self.distance[:, None], self.kernel_matrix).solution.reshape(-1)
+            self.gains = torch.linalg.solve(self.kernel_matrix, self.distance[:, None]).reshape(-1)
             # self.gains = self.gains.requires_grad_(True)
             # opt = torch.optim.Adam([self.gains], lr=0.001)
         self.rbf_nodes = self.gains
@@ -167,7 +167,7 @@ class DiffCoBeta(DiffCo):
         self.rbf_kernel = kernel.MultiQuadratic(1) if kernel_func is None else kernel_func
         kmat = self.rbf_kernel(X, X)
 
-        self.rbf_nodes = torch.solve(y[:, None], kmat).solution.reshape(-1)
+        self.rbf_nodes = torch.linalg.solve(kmat, y[:, None]).solution.reshape(-1)
         # print(kmat@self.rbf_nodes) # DEBUG
     
     def rbf_score(self, point):
